@@ -31,21 +31,26 @@ object Day1 extends IOApp.Simple {
   val regex: Regex               = s"""\\d|${words.keySet.mkString("|")}""".r
   val reverseRegex: Regex        = s"""\\d|${words.keySet.map(_.reverse).mkString("|")}""".r
 
-  val task2: IO[Unit] = for {
-    lines <- Utils.readLines[IO]("day1.input.txt").compile.toList
-    res   <- lines
-               .traverse { l =>
-                 for {
-                   foundFirst: String <- IO.fromOption(regex.findFirstIn(l))(new RuntimeException("invalid input"))
-                   first: Int          = words.getOrElse(foundFirst, foundFirst).toInt
-                   foundLast: String  <-
-                     IO.fromOption(reverseRegex.findFirstIn(l.reverse))(new RuntimeException("invalid input"))
-                   last: Int           = words.map((k, v) => k.reverse -> v).getOrElse(foundLast, foundLast).toInt
-                 } yield first * 10 + last
-               }
-               .map(_.sum)
-    _     <- IO.println(res)
-  } yield ()
+  val task2: IO[Unit] =
+    Utils
+      .readLines[IO]("day1.input.txt")
+      .evalMap { l =>
+        for {
+          foundFirst: String <-
+            IO.fromOption(regex.findFirstIn(l))(new RuntimeException("invalid input"))
+          first: Int          = words.getOrElse(foundFirst, foundFirst).toInt
+          foundLast: String  <-
+            IO.fromOption(reverseRegex.findFirstIn(l.reverse))(
+              new RuntimeException("invalid input")
+            )
+          last: Int           =
+            words.map((k, v) => k.reverse -> v).getOrElse(foundLast, foundLast).toInt
+        } yield first * 10 + last
+      }
+      .fold(0)(_ + _)
+      .evalTap(IO.println)
+      .compile
+      .drain
 
   def run: IO[Unit] = task2
 }
