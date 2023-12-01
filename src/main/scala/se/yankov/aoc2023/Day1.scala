@@ -33,13 +33,17 @@ object Day1 extends IOApp.Simple {
 
   val task2: IO[Unit] = for {
     lines <- Utils.readLines[IO]("day1.input.txt").compile.toList
-    res    = lines.map { l =>
-               val foundFirst: String = regex.findFirstIn(l).get
-               val first: Int         = words.getOrElse(foundFirst, foundFirst).toInt
-               val foundLast: String  = reverseRegex.findFirstIn(l.reverse).get
-               val last: Int          = words.map((k, v) => k.reverse -> v).getOrElse(foundLast, foundLast).toInt
-               first * 10 + last
-             }.sum
+    res   <- lines
+               .traverse { l =>
+                 for {
+                   foundFirst: String <- IO.fromOption(regex.findFirstIn(l))(new RuntimeException("invalid input"))
+                   first: Int          = words.getOrElse(foundFirst, foundFirst).toInt
+                   foundLast: String  <-
+                     IO.fromOption(reverseRegex.findFirstIn(l.reverse))(new RuntimeException("invalid input"))
+                   last: Int           = words.map((k, v) => k.reverse -> v).getOrElse(foundLast, foundLast).toInt
+                 } yield first * 10 + last
+               }
+               .map(_.sum)
     _     <- IO.println(res)
   } yield ()
 
