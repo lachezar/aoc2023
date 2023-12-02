@@ -32,9 +32,11 @@ object Day2 extends IOApp.Simple {
   val task1: IO[Unit] =
     Utils
       .readLines[IO]("day2.input.txt")
-      .map { l =>
-        val game: Game = Game.parse(l)
-        if game.picks.exists(pick => pick.red > 12 || pick.green > 13 || pick.blue > 14) then 0 else game.id
+      .evalMap { l =>
+        IO.delay {
+          val game: Game = Game.parse(l)
+          if game.picks.exists(pick => pick.red > 12 || pick.green > 13 || pick.blue > 14) then 0 else game.id
+        }.orRaise(new RuntimeException("invalid input"))
       }
       .fold(0)(_ + _)
       .evalTap(IO.println)
@@ -44,12 +46,14 @@ object Day2 extends IOApp.Simple {
   val task2: IO[Unit] =
     Utils
       .readLines[IO]("day2.input.txt")
-      .map { l =>
-        val game: Game            = Game.parse(l)
-        val minPossiblePick: Pick = game
-          .picks
-          .reduce((a, b) => Pick(Math.max(a.red, b.red), Math.max(a.green, b.green), Math.max(a.blue, b.blue)))
-        minPossiblePick.red * minPossiblePick.green * minPossiblePick.blue
+      .evalMap { l =>
+        IO.delay {
+          val game: Game            = Game.parse(l)
+          val minPossiblePick: Pick = game
+            .picks
+            .reduce((a, b) => Pick(Math.max(a.red, b.red), Math.max(a.green, b.green), Math.max(a.blue, b.blue)))
+          minPossiblePick.red * minPossiblePick.green * minPossiblePick.blue
+        }.orRaise(new RuntimeException("invalid input"))
       }
       .fold(0)(_ + _)
       .evalTap(IO.println)
