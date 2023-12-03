@@ -37,7 +37,7 @@ object Day3 extends IOApp.Simple {
         (if row < board.length - 1 then (start to end).find(board(row + 1)(_) == '*').map((row + 1) -> _)
          else None)
 
-    def addDigit(d: Int): Number = copy(value = value * 10 + d.toInt, end = end + 1)
+    def addDigit(d: Int): Number = copy(value = value * 10 + d, end = end + 1)
 
   object Number:
     def empty: Number = Number(0, 0, 0, 0)
@@ -53,7 +53,7 @@ object Day3 extends IOApp.Simple {
       }
       else number -> parts
       val (newNumber, newParts): (Option[Number], List[Number])         = if (cell.isDigit) {
-        val digit: Int = cell.toInt - 0x30
+        val digit: Int = cell - '0'
         currentNumber match
           case None        => Some(Number(digit, y, x, x)) -> currentParts
           case Some(value) => Some(value.addDigit(digit))  -> currentParts
