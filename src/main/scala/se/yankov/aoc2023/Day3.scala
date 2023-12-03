@@ -80,7 +80,7 @@ object Day3 extends IOApp.Simple {
                                                              case Some(y -> x) -> (n1 :: n2 :: Nil) => true
                                                              case _                                 => false
                                                            }
-    gearRatios: Int                                      = partsWithCogs.values.map(_.foldLeft(1)(_ * _.value)).sum
+    gearRatios: Int                                      = partsWithCogs.values.map(_.map(_.value).product).sum
     _                                                   <- IO.println(gearRatios)
   } yield ()
 
