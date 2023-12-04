@@ -39,14 +39,14 @@ object Day4 extends IOApp.Simple {
                                        .compile
                                        .toVector
     initialMap: Map[CardId, Count] = cards.map(_.id -> 1).toMap
-    // for every card with id X, for the number of "matches" M of that card X, add one new "card copy" for cards with ids between X+1 .. X+M
+    // for every card with id X and "card copies" count C,
+    // for the number of "matches" M of that card X,
+    // add C new "card copies" for cards with ids between X+1 .. X+M
     result: Map[CardId, Count]     = cards.foldLeft(initialMap) { (m: Map[CardId, Count], card: Card) =>
                                        val copiesCount: Count = m(card.id)
-                                       (1 to copiesCount).foldLeft(m) { (m: Map[CardId, Count], _) =>
-                                         ((card.id + 1) to (card.id + card.matches)).foldLeft(m) {
-                                           (m: Map[CardId, Count], nextId: CardId) =>
-                                             m.updatedWith(nextId)(_.map(_ + 1))
-                                         }
+                                       ((card.id + 1) to (card.id + card.matches)).foldLeft(m) {
+                                         (m: Map[CardId, Count], nextId: CardId) =>
+                                           m.updatedWith(nextId)(_.map(_ + copiesCount))
                                        }
                                      }
     _                             <- IO.println(result.values.sum)
