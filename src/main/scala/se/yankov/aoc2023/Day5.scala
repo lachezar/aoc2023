@@ -89,7 +89,7 @@ object Day5 extends IOApp.Simple {
         .map(_.jumps)
         .foldLeft(seeds.map(Jump(_, None)))((acc: List[Jump], jm: List[Jump]) =>
           val intersections: List[Jump]                     = acc.flatMap((target: Jump) => jm.flatMap(intersectRanges(target, _)))
-          val (specified: List[Jump], defaults: List[Jump]) = intersections.partition(_.change != None)
+          val (specified: List[Jump], defaults: List[Jump]) = intersections.partition(_.change.isDefined)
           val removedShadowedDefaults: List[Jump]           =
             specified ++ defaults.filterNot((d: Jump) => specified.exists((s: Jump) => d.range.overlaps(s.range)))
           removedShadowedDefaults.map(_.normalize)
