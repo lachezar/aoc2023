@@ -80,25 +80,25 @@ object Day10 extends IOApp.Simple {
         row
           .sliding(2, 2)
           .map((parts: Array[Char]) => parts(0) -> parts(1))
-          .flatMap {
-            case '|' -> '.' => '|' :: Nil
-            case '-' -> '-' => '-' :: Nil
-            case 'F' -> '-' => 'F' :: Nil
-            case '7' -> '.' => '7' :: Nil
-            case 'J' -> '.' => 'J' :: Nil
-            case 'L' -> '-' => 'L' :: Nil
-            case x -> y     => x :: Nil
+          .map {
+            case '|' -> '.' => '|'
+            case '-' -> '-' => '-'
+            case 'F' -> '-' => 'F'
+            case '7' -> '.' => '7'
+            case 'J' -> '.' => 'J'
+            case 'L' -> '-' => 'L'
+            case x -> y     => x
           }
           .toArray
       )
-      .drop(1)
-      .sliding(2, 2)
-      .flatMap((row: Array[Array[Char]]) => row.head :: Nil)
+      .zipWithIndex
+      .filter((row, i) => i % 2 == 1)
+      .map(_.head)
       .toArray
 
   val task1and2: IO[Unit] = for {
     field: Array[Array[Char]]          <-
-      Utils.readLines[IO]("day10.input.txt").map(_.toArray).compile.toVector.map(_.toArray)
+      Utils.readLines[IO]("day10.input.txt").map(_.toArray).compile.to(Array)
     start: Pos                          = field
                                             .zipWithIndex
                                             .collectFirst {
