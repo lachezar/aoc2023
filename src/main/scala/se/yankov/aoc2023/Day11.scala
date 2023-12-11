@@ -35,48 +35,35 @@ object Day11 extends IOApp.Simple {
           .map(field.get(_).x)
           .sum - 1
 
+  def calculateDistances(field: Array[Array[Char]], expansionRate: Int): Long =
+    val galaxyPositions: Array[Pos]        = field
+      .zipWithIndex
+      .flatMap { (row, y) =>
+        row.zipWithIndex.collect {
+          case ('#', x) => Pos(y, x)
+        }
+      }
+    val expandedField: Array[Array[Space]] = field
+      .map(_.map((c: Char) => if c == '.' then Space.empty else Space.galaxy))
+      .expandSpaceField(expansionRate)
+      .map(_.map(_.normalize))
+    galaxyPositions
+      .combinations(2)
+      .collect {
+        case Array(first, second) => expandedField.distance(first, second)
+      }
+      .sum
+
   val task1: IO[Unit] = for {
-    field: Array[Array[Char]]         <- Utils.readLines[IO]("day11.input.txt").map(_.toArray).compile.to(Array)
-    galaxyPositions: Array[Pos]        = field
-                                           .zipWithIndex
-                                           .flatMap { (row, y) =>
-                                             row.zipWithIndex.collect {
-                                               case ('#', x) => Pos(y, x)
-                                             }
-                                           }
-    expandedField: Array[Array[Space]] = field
-                                           .map(_.map((c: Char) => if c == '.' then Space.empty else Space.galaxy))
-                                           .expandSpaceField(2)
-                                           .map(_.map(_.normalize))
-    res: Long                          = galaxyPositions
-                                           .combinations(2)
-                                           .collect {
-                                             case Array(first, second) => expandedField.distance(first, second)
-                                           }
-                                           .sum
-    _                                 <- IO.println(res)
+    field: Array[Array[Char]] <- Utils.readLines[IO]("day11.input.txt").map(_.toArray).compile.to(Array)
+    res: Long                  = calculateDistances(field, expansionRate = 2)
+    _                         <- IO.println(res)
   } yield ()
 
   val task2: IO[Unit] = for {
-    field: Array[Array[Char]]         <- Utils.readLines[IO]("day11.input.txt").map(_.toArray).compile.to(Array)
-    galaxyPositions: Array[Pos]        = field
-                                           .zipWithIndex
-                                           .flatMap { (row, y) =>
-                                             row.zipWithIndex.collect {
-                                               case ('#', x) => Pos(y, x)
-                                             }
-                                           }
-    expandedField: Array[Array[Space]] = field
-                                           .map(_.map((c: Char) => if c == '.' then Space.empty else Space.galaxy))
-                                           .expandSpaceField(1_000_000)
-                                           .map(_.map(_.normalize))
-    res: Long                          = galaxyPositions
-                                           .combinations(2)
-                                           .collect {
-                                             case Array(first, second) => expandedField.distance(first, second)
-                                           }
-                                           .sum
-    _                                 <- IO.println(res)
+    field: Array[Array[Char]] <- Utils.readLines[IO]("day11.input.txt").map(_.toArray).compile.to(Array)
+    res: Long                  = calculateDistances(field, expansionRate = 1_000_000)
+    _                         <- IO.println(res)
   } yield ()
 
   def run: IO[Unit] = task2
