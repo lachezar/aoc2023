@@ -1,8 +1,6 @@
 package se.yankov.aoc2023
 
-import Utils.dbg
 import cats.effect.{ IO, IOApp }
-import cats.syntax.all.*
 
 object Day6 extends IOApp.Simple {
 
