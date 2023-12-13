@@ -34,7 +34,7 @@ object Day12 extends IOApp.Simple {
              else 0) +
               (if tape.head == '#' then 0 else consume_(tape.tail, groups))
           }
-          memoization.update((tape, groups), result)
+          memoization.update(tape -> groups, result)
           result
 
     consume_(tape, groups)
