@@ -16,26 +16,24 @@ object Day12 extends IOApp.Simple {
     val memoization: collection.mutable.Map[(Vector[Char], List[Int]), Long] = collection.mutable.Map.empty
 
     def consume_(tape: Vector[Char], groups: List[Int]): Long =
-      memoization.get(tape -> groups) match
-        case Some(value) => value
-        case None        =>
-          val result: Long = if (groups.isEmpty) {
-            if tape.contains('#') then 0 else 1
-          }
-          else if (tape.length < groups.head) 0
-          else if (tape.take(groups.head).contains('.')) {
-            val dotIndex: Int = tape.indexOf('.')
-            if tape.take(dotIndex + 1).contains('#') then 0
-            else consume_(tape.drop(dotIndex + 1), groups)
-          }
-          else {
-            (if tape.length == groups.head || List('.', '?').contains(tape(groups.head))
-             then consume_(tape.drop(groups.head + 1), groups.tail)
-             else 0) +
-              (if tape.head == '#' then 0 else consume_(tape.tail, groups))
-          }
-          memoization.update(tape -> groups, result)
-          result
+      memoization.getOrElseUpdate(
+        tape -> groups,
+        if (groups.isEmpty) {
+          if tape.contains('#') then 0 else 1
+        }
+        else if (tape.length < groups.head) 0
+        else if (tape.take(groups.head).contains('.')) {
+          val dotIndex: Int = tape.indexOf('.')
+          if tape.take(dotIndex + 1).contains('#') then 0
+          else consume_(tape.drop(dotIndex + 1), groups)
+        }
+        else {
+          (if tape.length == groups.head || List('.', '?').contains(tape(groups.head))
+           then consume_(tape.drop(groups.head + 1), groups.tail)
+           else 0) +
+            (if tape.head == '#' then 0 else consume_(tape.tail, groups))
+        },
+      )
 
     consume_(tape, groups)
 
