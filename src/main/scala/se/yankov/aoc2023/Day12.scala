@@ -50,7 +50,7 @@ object Day12 extends IOApp.Simple {
     .readLines[IO]("day12.input.txt")
     .evalMap(parseLine)
     .map { (template: String, groups: Array[Int]) =>
-      consume(Vector.fill(5)(template).mkString("?").toVector, List.fill(5)(groups).flatten).toLong
+      consume(Vector.fill(5)(template.toVector).reduce(_ :+ '?' :++ _), List.fill(5)(groups).flatten).toLong
     }
     .fold(0L)(_ + _)
     .printlns
