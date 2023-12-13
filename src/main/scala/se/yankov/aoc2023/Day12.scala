@@ -13,7 +13,7 @@ object Day12 extends IOApp.Simple {
       case _                       => IO.raiseError(new RuntimeException("invalid input"))
 
   def consume(tape: Vector[Char], groups: List[Int]): Long =
-    var memoization: collection.mutable.Map[(Vector[Char], List[Int]), Long] = collection.mutable.Map.empty
+    val memoization: collection.mutable.Map[(Vector[Char], List[Int]), Long] = collection.mutable.Map.empty
 
     def consume_(tape: Vector[Char], groups: List[Int]): Long =
       memoization.get(tape -> groups) match
@@ -59,5 +59,5 @@ object Day12 extends IOApp.Simple {
     .compile
     .drain
 
-  def run: IO[Unit] = task2
+  def run: IO[Unit] = task1 >> task2
 }
