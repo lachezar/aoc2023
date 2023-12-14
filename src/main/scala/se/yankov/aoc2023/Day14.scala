@@ -6,7 +6,6 @@ import scala.annotation.tailrec
 object Day14 extends IOApp.Simple {
 
   final case class NormalizedRow(offset: Int, amount: Int):
-    def range: Range                   = offset until (offset + amount)
     def incrementAmount: NormalizedRow = copy(amount = amount + 1)
 
   extension (field: Vector[Vector[Char]])
@@ -33,7 +32,7 @@ object Day14 extends IOApp.Simple {
     val cleanLine: Vector[Char]                        = Vector.fill(field.length)('.')
     yTransformation(normalizedField.map { (row: Vector[NormalizedRow]) =>
       xTransformation(row.foldLeft(cleanLine) {
-        case (line: Vector[Char], nr @ NormalizedRow(offset, amount)) =>
+        case (line: Vector[Char], NormalizedRow(offset, amount)) =>
           // Restore the normalized matrix back to the original format
           val lineWithSquareStone: Vector[Char] = if offset > 0 then line.updated(offset - 1, '#') else line
           lineWithSquareStone.patch(offset, Vector.fill(amount)('O'), amount)
@@ -52,16 +51,16 @@ object Day14 extends IOApp.Simple {
     tiltEast compose tiltSouth compose tiltWest compose tiltNorth
 
   @tailrec
-  def findBillionthCycle(field: Vector[Vector[Char]], previousCycles: Vector[Vector[Vector[Char]]])
+  def computeBillionthCycle(field: Vector[Vector[Char]], previousCycles: Vector[Vector[Vector[Char]]])
       : Vector[Vector[Char]] =
     val res: Vector[Vector[Char]] = cycle(field)
     val matchingCycleIndex: Int   = previousCycles.indexOf(res)
     if matchingCycleIndex > -1 then {
-      val cyclePeriod: Int        = previousCycles.length - matchingCycleIndex
-      val billionCyclesIndex: Int = (1_000_000_000 - matchingCycleIndex) % cyclePeriod + matchingCycleIndex - 1
-      previousCycles(billionCyclesIndex)
+      val cyclePeriod: Int         = previousCycles.length - matchingCycleIndex
+      val billionthCycleIndex: Int = (1_000_000_000 - matchingCycleIndex) % cyclePeriod + matchingCycleIndex - 1
+      previousCycles(billionthCycleIndex)
     }
-    else findBillionthCycle(res, previousCycles :+ res)
+    else computeBillionthCycle(res, previousCycles :+ res)
 
   val task1: IO[Unit] = for {
     field: Vector[Vector[Char]] <- Utils.readLines[IO]("day14.input.txt").map(_.toVector).compile.toVector
@@ -71,7 +70,7 @@ object Day14 extends IOApp.Simple {
 
   val task2: IO[Unit] = for {
     field: Vector[Vector[Char]] <- Utils.readLines[IO]("day14.input.txt").map(_.toVector).compile.toVector
-    res: Int                     = findBillionthCycle(field, Vector.empty).totalLoad
+    res: Int                     = computeBillionthCycle(field, Vector.empty).totalLoad
     _                           <- IO.println(res)
   } yield ()
 
