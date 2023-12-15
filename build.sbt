@@ -16,5 +16,5 @@ lazy val root = (project in file(".")).settings(
     "org.typelevel" %% "munit-cats-effect-3" % "1.0.7" % Test,
   ),
   Compile / run / fork := true,
-  ThisBuild / scalacOptions ++= Seq("-unchecked", "-deprecation"),
+  ThisBuild / scalacOptions ++= Seq("-unchecked", "-deprecation", "-Xfatal-warnings"),
 )

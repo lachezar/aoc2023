@@ -23,10 +23,10 @@ object Day15 extends IOApp.Simple {
 
   extension (boxes: Vector[Box])
     def focusingPower: Int =
-      boxes
-        .zipWithIndex
-        .map((box, i) => box.lenses.zipWithIndex.map((lens, j) => (i + 1) * (j + 1) * lens.focalLength).sum)
-        .sum
+      (for {
+        (box: Box, boxId: Int)                   <- boxes.zipWithIndex
+        (Lens(_, focalLength: Int), lensId: Int) <- box.lenses.zipWithIndex
+      } yield (boxId + 1) * (lensId + 1) * focalLength).sum
 
   extension (operations: Vector[Operation])
     def apply(boxes: Vector[Box]): Vector[Box] = operations.foldLeft(boxes) {
