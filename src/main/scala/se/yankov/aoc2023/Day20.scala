@@ -2,6 +2,7 @@ package se.yankov.aoc2023
 
 import cats.effect.{ IO, IOApp }
 import cats.syntax.traverse.toTraverseOps
+import scala.annotation.tailrec
 
 object Day20 extends IOApp.Simple {
 
@@ -46,6 +47,7 @@ object Day20 extends IOApp.Simple {
 
   def buttonPush(transitionsMap: Map[String, Module], buttonPushes: Int, cycles: Map[String, Long])
       : (Map[String, Module], Int, Int, Map[String, Long]) =
+    @tailrec
     def buttonPush_(
         transitionsMap: Map[String, Module],
         inputs: Vector[(String, Pulse, String)],
