@@ -33,7 +33,7 @@ object Day20 extends IOApp.Simple {
   final case class BroadcasterModule(val next: Vector[String])                                       extends Module:
     val name: String = "broadcaster"
 
-  def constructConjunctionInputs(transitionsMap: Map[String, Module]): Map[String, Module] =
+  def addConjunctionInputs(transitionsMap: Map[String, Module]): Map[String, Module] =
     transitionsMap
       .collect {
         case (k: String, _: ConjunctionModule) =>
@@ -110,6 +110,20 @@ object Day20 extends IOApp.Simple {
     val initialInputs: Vector[String] = transitionsMap("broadcaster").next
     buttonPush_(transitionsMap, initialInputs.map(("broadcaster", Pulse.Low, _)), initialInputs.length, 0, cycles)
 
+  @tailrec
+  def buttonPushesForRx(
+      transitionsMap: Map[String, Module],
+      cycles: Map[String, Long],
+      buttonPushes: Int,
+      rxInputModules: Iterable[String],
+    ): Long =
+    rxInputModules.map(cycles.get(_)).toList.sequence.map(_.product) match
+      case None        =>
+        val (newTransitionsMap: Map[String, Module], _, _, newCycles: Map[String, Long]) =
+          buttonPush(transitionsMap, buttonPushes + 1, cycles)
+        buttonPushesForRx(newTransitionsMap, newCycles, buttonPushes + 1, rxInputModules)
+      case Some(value) => value
+
   def parseModules(lines: List[String]): List[Module] = lines.collect {
     case s"broadcaster -> $next" => BroadcasterModule(next.split(", ").toVector)
     case s"%$name -> $next"      => FlipFlopModule(name, next.split(", ").toVector, FlipFlop.Off)
@@ -119,7 +133,7 @@ object Day20 extends IOApp.Simple {
   val task1: IO[Unit] = for {
     lines: List[String]                           <- Utils.readLines[IO]("day20.input.txt").compile.toList
     modules: List[Module]                          = parseModules(lines)
-    transitionsMap: Map[String, Module]            = constructConjunctionInputs(Map.from(modules.map((m: Module) => m.name -> m)))
+    transitionsMap: Map[String, Module]            = addConjunctionInputs(Map.from(modules.map((m: Module) => m.name -> m)))
     (_, lowPulsesCount: Int, highPulsesCount: Int) =
       (1 to 1000).foldLeft((transitionsMap, 0, 0)) {
         case ((acc: Map[String, Module], lowPulsesCountAcc: Int, highPulsesCountAcc: Int), i) =>
@@ -133,19 +147,13 @@ object Day20 extends IOApp.Simple {
   val task2: IO[Unit] = for {
     lines: List[String]                <- Utils.readLines[IO]("day20.input.txt").compile.toList
     modules: List[Module]               = parseModules(lines)
-    transitionsMap: Map[String, Module] = constructConjunctionInputs(Map.from(modules.map((m: Module) => m.name -> m)))
-    (_, cycles: Map[String, Long])      =
-      (1 to 5000).foldLeft(transitionsMap -> Map.empty[String, Long]) {
-        case ((acc: Map[String, Module], cycles: Map[String, Long]), i) =>
-          val (newTransitionsMap: Map[String, Module], _, _, newCycles: Map[String, Long]) = buttonPush(acc, i, cycles)
-          newTransitionsMap -> newCycles
-      }
+    transitionsMap: Map[String, Module] = addConjunctionInputs(Map.from(modules.map((m: Module) => m.name -> m)))
     rxInputModules: Iterable[String]    =
       transitionsMap
         .values
         .filter(_.next.exists(transitionsMap.values.filter(_.next.contains("rx")).map(_.name).toList.contains(_)))
         .map(_.name)
-    res: Option[Long]                   = rxInputModules.map(cycles.get(_)).toList.sequence.map(_.product)
+    res: Long                           = buttonPushesForRx(transitionsMap, Map.empty, 0, rxInputModules)
     _                                  <- IO.println(res)
   } yield ()
 
