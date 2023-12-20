@@ -11,7 +11,7 @@ object Day20 extends IOApp.Simple {
 
   enum FlipFlop:
     case On, Off
-    def receive: Pulse => (FlipFlop, Option[Pulse]) =
+    def transition: Pulse => (FlipFlop, Option[Pulse]) =
       case Pulse.High => this -> None
       case Pulse.Low  =>
         this match
@@ -19,15 +19,17 @@ object Day20 extends IOApp.Simple {
           case Off => On  -> Some(Pulse.High)
 
   final case class Conjunction(memory: Map[String, Pulse]):
-    def receive(input: String, pulse: Pulse): (Conjunction, Pulse) =
+    def transition(input: String, pulse: Pulse): (Conjunction, Pulse) =
       val updatedMemory: Map[String, Pulse] = memory.updated(input, pulse)
       copy(memory = updatedMemory) -> (if updatedMemory.values.forall(_ == Pulse.High) then Pulse.Low else Pulse.High)
 
   sealed trait Module:
     val name: String
     val next: Vector[String]
-  final case class FlipFlopModule(val name: String, val next: Vector[String], state: FlipFlop)       extends Module
-  final case class ConjunctionModule(val name: String, val next: Vector[String], state: Conjunction) extends Module
+  final case class FlipFlopModule(val name: String, val next: Vector[String], state: FlipFlop)       extends Module:
+    def receive: Pulse => (FlipFlop, Option[Pulse]) = state.transition
+  final case class ConjunctionModule(val name: String, val next: Vector[String], state: Conjunction) extends Module:
+    def receive: (String, Pulse) => (Conjunction, Pulse) = state.transition
   final case class BroadcasterModule(val next: Vector[String])                                       extends Module:
     val name: String = "broadcaster"
 
@@ -73,7 +75,7 @@ object Day20 extends IOApp.Simple {
                  ) =>
               transitionsMap.get(name) match
                 case Some(flipflop: FlipFlopModule) =>
-                  flipflop.state.receive(pulse) match
+                  flipflop.receive(pulse) match
                     case (_, None)                                   => (accMap, accInputs, accCycles)
                     case (newState: FlipFlop, Some(newPulse: Pulse)) =>
                       (
@@ -83,7 +85,7 @@ object Day20 extends IOApp.Simple {
                       )
 
                 case Some(conjunction: ConjunctionModule) =>
-                  val (newState: Conjunction, newPulse: Pulse) = conjunction.state.receive(parentName, pulse)
+                  val (newState: Conjunction, newPulse: Pulse) = conjunction.receive(parentName, pulse)
                   val newCycles: Map[String, Long]             =
                     if newPulse == Pulse.High && !accCycles.contains(conjunction.name) then
                       accCycles.updated(conjunction.name, buttonPushes.toLong)
@@ -100,24 +102,18 @@ object Day20 extends IOApp.Simple {
         buttonPush_(
           newTransitionsMap,
           newInputs,
-          lowPulsesCount + newInputs.count(_._2 == Pulse.Low),
-          highPulsesCount + newInputs.count(_._2 == Pulse.High),
+          lowPulsesCount + newInputs.count((_, pulse: Pulse, _) => pulse == Pulse.Low),
+          highPulsesCount + newInputs.count((_, pulse: Pulse, _) => pulse == Pulse.High),
           newCycles,
         )
 
-    buttonPush_(
-      transitionsMap,
-      transitionsMap("broadcaster").next.map(("broadcaster", Pulse.Low, _)),
-      transitionsMap("broadcaster").next.length,
-      0,
-      cycles,
-    )
+    val initialInputs: Vector[String] = transitionsMap("broadcaster").next
+    buttonPush_(transitionsMap, initialInputs.map(("broadcaster", Pulse.Low, _)), initialInputs.length, 0, cycles)
 
   def parseModules(lines: List[String]): List[Module] = lines.collect {
     case s"broadcaster -> $next" => BroadcasterModule(next.split(", ").toVector)
     case s"%$name -> $next"      => FlipFlopModule(name, next.split(", ").toVector, FlipFlop.Off)
-    case s"&$name -> $next"      =>
-      ConjunctionModule(name, next.split(", ").toVector, Conjunction(Map.empty))
+    case s"&$name -> $next"      => ConjunctionModule(name, next.split(", ").toVector, Conjunction(Map.empty))
   }
 
   val task1: IO[Unit] = for {
@@ -151,7 +147,6 @@ object Day20 extends IOApp.Simple {
         .map(_.name)
     res: Option[Long]                   = rxInputModules.map(cycles.get(_)).toList.sequence.map(_.product)
     _                                  <- IO.println(res)
-
   } yield ()
 
   def run: IO[Unit] = task1 >> task2
