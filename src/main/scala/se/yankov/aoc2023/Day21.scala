@@ -1,6 +1,7 @@
 package se.yankov.aoc2023
 
 import cats.effect.{ IO, IOApp }
+import scala.annotation.tailrec
 
 object Day21 extends IOApp.Simple {
 
@@ -23,6 +24,7 @@ object Day21 extends IOApp.Simple {
   def startPosition(lines: List[String]): Pos =
     lines.zipWithIndex.collectFirst { case line -> y if line.contains('S') => Pos(y, line.indexOf("S")) }.get
 
+  @tailrec
   def deriveElementInSequence(arr: Array[Long], index: Int): Long =
     if index >= 0 then deriveElementInSequence(arr.tail :+ Day9.findNext(arr), index - 1)
     else arr.last
@@ -46,7 +48,8 @@ object Day21 extends IOApp.Simple {
                                            res    -> (accCoefficients :+ res.size)
                                          else res -> accCoefficients
                                      }
-    res: Long                      = deriveElementInSequence(coefficients.toArray, (26501365 - 65) / lines.length - coefficients.length)
+    res: Long                      =
+      deriveElementInSequence(coefficients, (26501365 - lines.length / 2) / lines.length - coefficients.length)
     _                             <- IO.println(res)
   } yield ()
 
