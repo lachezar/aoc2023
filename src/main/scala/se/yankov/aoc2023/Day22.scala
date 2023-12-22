@@ -4,22 +4,11 @@ import cats.effect.{ IO, IOApp }
 
 object Day22 extends IOApp.Simple {
 
-  final case class ElfRange(from: Int, to: Int):
-    def overlap(other: ElfRange): Boolean =
-      (from <= other.from && other.from <= to) || (from <= other.to && other.to <= to) ||
-      (other.from <= from && from <= other.to) || (other.from <= to && to <= other.to)
-    def range: Range                      = this.from to this.to
-
   final case class Pos(x: Int, y: Int, z: Int)
 
   final case class Brick(id: Int, p1: Pos, p2: Pos):
     val height: Int                       = p2.z - p1.z + 1
-    val xrange: ElfRange                  = ElfRange(p1.x, p2.x)
-    val yrange: ElfRange                  = ElfRange(p1.y, p2.y)
-    val zrange: ElfRange                  = ElfRange(p1.z, p2.z)
-    def cartesianProduct: Seq[(Int, Int)] = yrange.range.flatMap((y: Int) => xrange.range.map(y -> _))
-    def overlap(other: Brick): Boolean    =
-      xrange.overlap(other.xrange) && yrange.overlap(other.yrange) && zrange.overlap(other.zrange)
+    def cartesianProduct: Seq[(Int, Int)] = (p1.y to p2.y).flatMap((y: Int) => (p1.x to p2.x).map(y -> _))
     def offsetZ(value: Int): Brick        = copy(p1 = p1.copy(z = value + 1), p2 = p2.copy(z = value + height))
 
   def stackBricks(bricks: Vector[Brick]): Vector[Brick] =
@@ -27,12 +16,12 @@ object Day22 extends IOApp.Simple {
       Vector.fill(bricks.map(_.p2.y).max + 1)(Vector.fill(bricks.map(_.p2.x).max + 1)(0))
     bricks
       .foldLeft(Vector.empty[Brick] -> bottom) {
-        case (((brickAcc: Vector[Brick]) -> (botAcc: Vector[Vector[Int]])) -> (brick: Brick)) =>
-          val highestPoint: Int = brick.cartesianProduct.map { case (y: Int) -> (x: Int) => botAcc(y)(x) }.max
+        case (((brickAcc: Vector[Brick]) -> (bottomAcc: Vector[Vector[Int]])) -> (brick: Brick)) =>
+          val highestPoint: Int = brick.cartesianProduct.map { case (y: Int) -> (x: Int) => bottomAcc(y)(x) }.max
           (brickAcc :+ brick.offsetZ(highestPoint)) ->
-            brick.cartesianProduct.foldLeft(botAcc) {
-              case ((botAcc: Vector[Vector[Int]]) -> ((y: Int) -> (x: Int))) =>
-                botAcc.updated(y, botAcc(y).updated(x, highestPoint + brick.height))
+            brick.cartesianProduct.foldLeft(bottomAcc) {
+              case ((bottomAcc: Vector[Vector[Int]]) -> ((y: Int) -> (x: Int))) =>
+                bottomAcc.updated(y, bottomAcc(y).updated(x, highestPoint + brick.height))
             }
       }
       .head
