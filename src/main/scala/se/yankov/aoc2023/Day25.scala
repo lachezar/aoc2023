@@ -1,6 +1,7 @@
 package se.yankov.aoc2023
 
 import cats.effect.{ IO, IOApp }
+import scala.annotation.tailrec
 
 object Day25 extends IOApp.Simple {
 
@@ -17,6 +18,7 @@ object Day25 extends IOApp.Simple {
   extension (nodes: List[String])
     def toEdges: List[Edge] = nodes.sliding(2).collect { case (a :: b :: Nil) => Edge(a, b) }.toList
 
+  @tailrec
   def fillWithMaxPath(graph: Map[String, List[String]], queue: Vector[String], visited: Set[String], path: List[String])
       : List[String] =
     queue match
@@ -25,6 +27,7 @@ object Day25 extends IOApp.Simple {
         else fillWithMaxPath(graph, next :++ graph(node), visited + node, node :: path)
       case _                                        => path
 
+  @tailrec
   def walkWithPath(graph: Map[String, List[String]], queue: Vector[(String, List[String])], endNode: String)
       : List[String] =
     queue match
