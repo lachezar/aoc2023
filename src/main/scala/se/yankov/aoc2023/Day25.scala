@@ -34,6 +34,17 @@ object Day25 extends IOApp.Simple {
         else walkWithPath(graph, next :++ graph(node).map(_ -> (node :: path)), endNode)
       case _                                                                            => Nil
 
+  /* The idea is to find two nodes (A and B) on the opposite ends of the graph and then the three connecting edges
+   * should sit between them since by definition "everything" should sit between these end nodes A and B.
+   * So if we traverse the graph three times between A and B using aggregated `visited nodes set`
+   * (aggregated on each next traversal), then we will definitely go through all the three connecting edges that we look for.
+   * The result of the three traversals is three paths (sequences of edges) so we just need to pick every combination of three
+   * edges from the three paths and check if the graph is split in two clusters using BFS.
+   * Once we discover which three edges are separating the graph in two clusters, then we just need to find the number of
+   * nodes in each separate cluster - e.g. using BFS from any given node will give us the size of one of the clusters and
+   * we can figure the size of the other cluster by subtracting the size of the original graph from the size of the cluster
+   * we have just found.
+   */
   def run: IO[Unit] = for {
     edges: List[Edge]               <- Utils
                                          .readLines[IO]("day25.input.txt")
